@@ -118,8 +118,8 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'composite',
-    'newadmin',
-    'pub',
+    'adminnext',
+    'main',
 )
 
 # A sample logging configuration. The only tangible logging

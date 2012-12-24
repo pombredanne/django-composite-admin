@@ -10,7 +10,7 @@ class Author(models.Model):
         return '%s %s' % (self.firstname, self.lastname)
 
 
-class Haiku(models.Model):
+class Poem(models.Model):
     title = models.CharField(max_length=255)
     body = models.TextField()
     author = models.ForeignKey(Author)

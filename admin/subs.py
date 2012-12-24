@@ -1,20 +1,108 @@
 from django.conf import settings
 from django.db.models import Model
+from django.db.models.base import ModelBase
+from django.views.generic import View
 from django.core.paginator import Paginator
+from django.core.paginator import EmptyPage
+from django.core.paginator import PageNotAnInteger
+from django.shortcuts import get_object_or_404
+from django.shortcuts import redirect
 from django.utils.importlib import import_module
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.contrib.admin.models import LogEntry
+from django.forms.models import modelform_factory
 
 from composite.sub import Sub
 from composite.widget import Widget
-from composite.pages.bootstrap import OneColumn
+from composite.utils import OrderedSet
+from composite.bootstrap import Login as LoginWidget
+from composite.pages.bootstrap import BootstrapPage
+
+
+class AdminPage(BootstrapPage):
+
+    css_files = ['css/admin.css']
+    template_name = 'adminnext/base.html'
+    widgets = []
+
+    is_staff = True
+
+    breadcrumb = []
+
+    @classmethod
+    def get_widgets(cls, self=None, request=None, *args, **kwargs):
+        return cls.widgets
+
+    def get_context_data(self, request, *args, **kwargs):
+        ctx = super(AdminPage, self).get_context_data(request, *args, **kwargs)
+        widgets = list()
+        for widget in self.get_widgets():
+            widget = widget.render(self, request, *args, **kwargs)
+            widgets.append(widget)
+        ctx['widgets'] = widgets
+        ctx['breadcrumb'] = self.breadcrumb
+        return ctx
+
+
+class ObjectChange(AdminPage):
+
+    path = r'^/edit/(\d+)$'
+    name = 'object-change'
+
+    template_name = 'adminnext/object_change.html'
+
+    def __init__(self):
+        super(ObjectChange, self).__init__()
+        self.breadcrumb = OrderedSet((
+            ('Home', 'index'),
+            (self.sub.app_label, None),  # FIXME need url name
+            (self.sub.model_name, None),  # FIXME need url name
+            ('edit', None),
+        ))
+
+    def get_object(self, request, pk):
+        return get_object_or_404(self.sub.model, pk=pk)
+
+    def get_form(self, request, obj=None):
+        ObjectModelForm = modelform_factory(self.sub.model)
+        if request.method == 'POST':
+            form = ObjectModelForm(request.POST, instance=obj)
+        else:
+            form = ObjectModelForm(instance=obj)
+        return form
+
+    def get_context_data(self, request, *args, **kwargs):
+        ctx = super(ObjectChange, self).get_context_data(request, *args, **kwargs)
+        pk = args[0]
+        ctx['object'] = obj = self.get_object(request, pk)
+        ctx['form'] = self.get_form(request, obj)
+        return ctx
+
+    def post(self, request, pk):
+        obj = self.get_object(request, pk)
+        form = self.get_form(request, obj)
+        if form.is_valid():
+            form.save()
+            url = '/adminnext/%s/%s' % (
+                self.sub.app_label,
+                self.sub.model_name,
+            )
+            return redirect(url)  # FIXME: hardcoded urls
+        ctx = self.get_context_data(request, pk)
+        r = self.render_to_response(ctx)
+        return r
 
 
 class ObjectListWidget(Widget):
 
-    template_name = 'admin/widgets/object_list.html'
+    template_name = 'adminnext/widgets/object_list.html'
+
+    def __init__(self, *columns):
+        super(ObjectListWidget, self).__init__()
+        self.columns = columns
 
     def get_context_data(self, page, request, *args, **kwargs):
         ctx = super(ObjectListWidget, self).get_context_data(page, request, *args, **kwargs)
+        # FIXME: merge the actions in this widget
         queryset = page.get_queryset(request)
         paginator = Paginator(queryset, 30)  # FIXME: hardcoded value
         page = request.GET.get('page')
@@ -27,21 +115,29 @@ class ObjectListWidget(Widget):
             # If page is out of range (e.g. 9999), deliver last page of results.
             objects = paginator.page(paginator.num_pages)
         ctx['objects'] = objects
+        ctx['columns'] = self.columns
+        ctx['object_change'] = '%s:%s' % (
+            self.page().sub.instance_namespace,
+            'object-change',
+        )
         return ctx
 
 
-class ObjectList(OneColumn):
+class ObjectList(AdminPage):
 
-    widgets = (ObjectListWidget(),)
+    widgets = (
+        ObjectListWidget(),
+    )
+    path = r'^$'
+    name = 'object-list'
 
-    path = r'$'
-
-    @property
-    def name(self):
-        return 'object-list-%s-%s' % (
-            self.sub.model._meta.app_label,
-            self.sub.model._meta.object_name,
-        )
+    def __init__(self):
+        super(ObjectList, self).__init__()
+        self.breadcrumb = OrderedSet((
+            ('Home', 'index'),
+            (self.sub.app_label, None),
+            (self.sub.model_name, None),
+        ))
 
     def get_queryset(self, request):
         model = self.sub.model
@@ -49,16 +145,33 @@ class ObjectList(OneColumn):
         return queryset
 
 
-class ObjectChange(OneColumn):
-    pass
+def subclass_for_model(klass, model):
+    # XXX: trick to get a view class model specific
+    # because the class is registered and not an instance of
+    # the class, it is the easiest way to dynamically create a View
+    # class that is bound to a model while still being able
+    # to use the same base class view for any model
+    app_label = model._meta.app_label.capitalize()
+    name = '%s%s%s' % (klass.__name__, app_label, model.__class__.__name__)
+    return type(name, (klass,), dict())
 
 
 class ModelAdmin(Sub):
 
+    application_namespace = None
+
+    ObjectList = ObjectList
+    ObjectChange = ObjectChange
+
     def __init__(self, model):
-        super(ModelAdmin, self).__init__()
         self.model = model
-        self.register(ObjectList)
+        instance_namespace = '%s-%s' % (
+            self.app_label,
+            self.model_name
+        )
+        super(ModelAdmin, self).__init__(instance_namespace)
+        self.register(subclass_for_model(self.ObjectList, model))
+        self.register(subclass_for_model(self.ObjectChange, model))
 
     @property
     def app_label(self):
@@ -73,24 +186,114 @@ class ModelAdmin(Sub):
         return r'%s/%s' % (self.app_label, self.model_name)
 
 
+class AppList(Widget):
+
+    template_name = 'adminnext/widgets/app_list.html'
+
+    def get_context_data(self, page, request, *args, **kwargs):
+        ctx = super(AppList, self).get_context_data(page, request, *args, **kwargs)
+        ctx['app_subs'] = self.page().sub.app_subs
+        return ctx
+
+
+class RecentActions(Widget):
+
+    template_name = 'adminnext/widgets/recent_actions.html'
+
+    def get_context_data(self, page, request, *args, **kwargs):
+        ctx = super(RecentActions, self).get_context_data(page, request, *args, **kwargs)
+        ctx['entries'] = LogEntry.objects.all()[:10]
+        return ctx
+
+
+class AdminIndex(AdminPage):
+
+    path = r'^$'
+    name = 'index'
+
+    widgets = (AppList(), RecentActions())
+
+    def __init__(self):
+        super(AdminIndex, self).__init__()
+        self.breadcrumb = OrderedSet((
+            ('Home', None),
+        ))
+
+
+class Login(AdminPage):
+
+    path = r'^login$'
+    name = 'login'
+
+    widgets = (LoginWidget('index'),)
+    body_class = 'login-index'
+
+    is_staff = False
+
+
+class Logout(View):
+
+    path = r'^logout$'
+    name = 'logout'
+
+
+class ChangePassword(AdminPage):
+
+    path = r'^change_password$'
+    name = 'change-password'
+
+
+class LoginManagement(Sub):
+
+    application_namespace = 'login'
+    path = r''
+
+    Login = Login
+    Logout = Logout
+    ChangePassword = ChangePassword
+
+    def __init__(self):
+        super(LoginManagement, self).__init__()
+        self.register(self.Login)
+        self.register(self.Logout)
+        self.register(self.ChangePassword)
+
+
 class Admin(Sub):
 
-    app_name = 'newadmin'
-    namespace = 'newadmin'
-    path = ''
+    application_namespace = 'composite-admin'
+    path = r''
 
-    def register(self, model, ModelAdminClass=None):
-        if ModelAdminClass:
-            admin = ModelAdminClass(model)
-            super(Admin, self).register(admin)
-        else:  # Use default ModelAdmin
-            admin = ModelAdmin(model)
-            super(Admin, self).register(admin)
+    # subs
+    ModelAdmin = ModelAdmin
+    LoginManagement = LoginManagement
+
+    # pages
+    AdminIndex = AdminIndex
+
+    def __init__(self, instance_namespace=None):
+        super(Admin, self).__init__(instance_namespace)
+        self.app_subs = dict()
+        self.register(self.AdminIndex)
+        self.register(self.LoginManagement())
+
+    def register_model(self, model, ModelAdmin=None):
+        app_label = model._meta.app_label
+        if app_label not in self.app_subs:
+            self.app_subs[app_label] = list()
+        ModelAdmin = ModelAdmin if ModelAdmin else self.ModelAdmin
+        admin = ModelAdmin(model)
+        self.register(admin)
+        self.app_subs[app_label].append(admin)
 
     def autodiscover(self, all=False):
-        for app in settings.INSTALLED_APPS:
-            models = import_module('%s.models' % app)
-            for variable_name in dir(models):
-                variable = getattr(models, variable_name)
-                if isinstance(variable, Model):
-                    self.register(variable)
+        if all:
+            for app in settings.INSTALLED_APPS:
+                models = import_module('%s.models' % app)
+                for variable_name in dir(models):
+                    variable = getattr(models, variable_name)
+                    if (isinstance(variable, ModelBase)
+                        and issubclass(variable, Model)):
+                        self.register_model(variable)
+        else:
+            raise NotImplementedError()

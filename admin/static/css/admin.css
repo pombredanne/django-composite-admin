@@ -1,0 +1,11 @@
+body {
+    padding-top: 50px;
+}
+
+.nav.model-list > li {
+    margin-bottom: 3px;
+}
+
+.nav.model-list > li > a {
+    display: inline;
+}

@@ -1,0 +1,65 @@
+{% load url from future %}
+{% load getattribute from admin_tags %}
+
+<div class=span12>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                {% if columns %}
+                    {% for column in columns %}
+                        <th>{{ column }}</th>
+                    {% endfor %}
+                {% else %}
+                    <th></th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for object in objects %}
+                <tr>
+                    <td>{{ object.pk }}</td>
+                    {% if columns %}
+                        {% for column in columns %}
+                            <td>
+                                {% if forloop.first %}
+                                    <a href="{% url object_change object.pk %}">
+                                {% endif %}
+                                {{ object|getattribute:column }}
+                                {% if forloop.first %}
+                                    </a>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    {% else %}
+                        <td>
+                            <a href="{% url object_change object.pk %}">
+                                {{ object }}
+                            </a>
+                        </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <ul class="pager">
+        {% if objects.has_previous %}
+            <li>
+                <a href="?page={{ objects.previous_page_number }}">&larr; previous</a>
+            </li>
+        {% else %}
+            <li class="disabled">
+                <a href="#">&larr; previous</a>
+            </li>
+        {% endif %}
+        {% if objects.has_next %}
+            <li>
+                <a href="?page={{ objects.next_page_number }}">next &rarr;</a>
+            </li>
+        {% else %}
+            <li class="disabled">
+                <a href="#">next &rarr;</a>
+            </li>
+        {% endif %}
+    </ul>
+</div>

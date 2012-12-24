@@ -1,0 +1,17 @@
+{% load url from future %}
+
+<ul class="breadcrumb">
+    {% for name, link in breadcrumb %}
+        {% if not forloop.last and link %}
+            <li>
+                <a href="{% url link %}">{{ name }}</a><span class="divider">/</span>
+            </li>
+        {% elif not forloop.last %}
+            <li>
+                {{ name }}<span class="divider">/</span>
+            </li>
+        {% else %}
+            <li class=active>{{ name }}</li>
+        {% endif %}
+    {% endfor %}
+</ul>

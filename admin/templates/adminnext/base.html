@@ -1,0 +1,27 @@
+{% extends "composite/one_column.html" %}
+
+{% load url from future %}
+
+{% block title %}Django Composite Administration{% endblock %}
+
+
+{% block header %}
+    {% include "adminnext/blocks/navbar.html" %}
+{% endblock %}
+
+{% block container %}
+    {% if breadcrumb %}
+        <div class=row>
+            <div class=span12>
+                {% include "adminnext/blocks/breadcrumb.html" with breadcrumb=breadcrumb %}
+            </div>
+        </div>
+    {% endif %}
+    <div class=row>
+        {% block row %}
+            {% for widget in widgets %}
+                {{ widget|safe }}
+            {% endfor %}
+        {% endblock %}
+    </div>
+{% endblock %}

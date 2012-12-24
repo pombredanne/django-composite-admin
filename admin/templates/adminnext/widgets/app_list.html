@@ -1,0 +1,14 @@
+{% load admin_tags %}
+
+<div class="span9">
+    {% for app_label, model_admins in app_subs.items %}
+        <div class=well>
+            <ul class="nav nav-list model-list">
+                <li class="nav-header">{{ app_label }}</li>
+                {% for model_admin in model_admins %}
+                    <li><a href="{% url model_admin.instance_namespace "object-list" %}">{{ model_admin.model_name }}</a> <span class="btn btn-mini pull-right">Add</span></li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endfor %}
+</div>
