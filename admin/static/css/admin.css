@@ -2,10 +2,29 @@ body {
     padding-top: 50px;
 }
 
-.nav.model-list > li {
-    margin-bottom: 3px;
+/* navbar */
+
+.navbar .brand {
+    padding-left: 30px;
 }
 
-.nav.model-list > li > a {
-    display: inline;
+.navbar .login {
+    padding-right: 10px;
+}
+
+/* */
+
+h1, h2, h3, h4, h5, h6 {
+    font-size: 1.2em;
+    margin: 0;
+}
+
+/* ChangeList */
+
+#object-tools {
+    margin-bottom: 10px;
+}
+
+.row1 {
+    background: #EEE;
 }

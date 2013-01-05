@@ -1,0 +1,9 @@
+{% extends "adminnext/model/widgets/changelist.html" %}
+
+
+{% block header %}
+    {{ block.super }}
+    <div id="actions">
+        {{ actions }} <input type="submit" name="_action_top" value="Go" class="btn" />
+    </div>
+{% endblock %}

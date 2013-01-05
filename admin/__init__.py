@@ -1,4 +1,5 @@
-from subs import Admin
+from collections import AdminSite
+from collections import ModelAdmin
 
 
-admin = Admin()
+site = AdminSite()

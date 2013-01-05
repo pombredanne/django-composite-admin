@@ -12,35 +12,10 @@ from django.contrib.admin.models import LogEntry
 from django.forms.models import modelform_factory
 
 from composite.sub import Sub
-from composite.widget import Widget
+from composite.views import StackedComposite
 from composite.utils import OrderedSet
-from composite.bootstrap import Login as LoginWidget
-from composite.pages.bootstrap import BootstrapPage
 
 
-class AdminPage(BootstrapPage):
-
-    css_files = ['css/admin.css']
-    template_name = 'adminnext/base.html'
-    widgets = []
-
-    is_staff = True
-
-    breadcrumb = []
-
-    @classmethod
-    def get_widgets(cls, self=None, request=None, *args, **kwargs):
-        return cls.widgets
-
-    def get_context_data(self, request, *args, **kwargs):
-        ctx = super(AdminPage, self).get_context_data(request, *args, **kwargs)
-        widgets = list()
-        for widget in self.get_widgets():
-            widget = widget.render(self, request, *args, **kwargs)
-            widgets.append(widget)
-        ctx['widgets'] = widgets
-        ctx['breadcrumb'] = self.breadcrumb
-        return ctx
 
 
 class ObjectChange(AdminPage):
@@ -52,12 +27,12 @@ class ObjectChange(AdminPage):
 
     def __init__(self):
         super(ObjectChange, self).__init__()
-        self.breadcrumb = OrderedSet((
+        self.breadcrumb = (
             ('Home', 'index'),
             (self.sub.app_label, None),  # FIXME need url name
             (self.sub.model_name, None),  # FIXME need url name
             ('edit', None),
-        ))
+        )
 
     def get_object(self, request, pk):
         return get_object_or_404(self.sub.model, pk=pk)
@@ -145,15 +120,6 @@ class ObjectList(AdminPage):
         return queryset
 
 
-def subclass_for_model(klass, model):
-    # XXX: trick to get a view class model specific
-    # because the class is registered and not an instance of
-    # the class, it is the easiest way to dynamically create a View
-    # class that is bound to a model while still being able
-    # to use the same base class view for any model
-    app_label = model._meta.app_label.capitalize()
-    name = '%s%s%s' % (klass.__name__, app_label, model.__class__.__name__)
-    return type(name, (klass,), dict())
 
 
 class ModelAdmin(Sub):

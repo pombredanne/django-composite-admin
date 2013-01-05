@@ -1,0 +1,21 @@
+{% extends "adminnext/base.html" %}
+
+{% load url from future %}
+
+{% block container_header %}
+    {% include "adminnext/blocks/navbar.html" %}
+{% endblock %}
+
+
+{% block row %}
+    {% regroup model_admins by app_label as apps %}
+
+    <ul class="well nav nav-list">
+        {% for app in apps %}
+            <li class="nav-header">{{ app.grouper }}</li>
+            {% for model_admin in app.list %}
+                <li><a href="{% url model_admin.index_name %}">{{ model_admin.model_name }}</a></li>
+            {% endfor %}
+        {% endfor %}
+    </ul>
+{% endblock %}
