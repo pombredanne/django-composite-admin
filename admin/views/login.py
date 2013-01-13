@@ -4,7 +4,8 @@ from django.contrib.auth import login
 from django.contrib.auth import authenticate
 from django.utils.translation import ugettext_lazy
 
-from base import Bootstrap
+from composite import StackedCompositeViewWithPost
+from composite import LeafCompositeView
 
 
 class LoginForm(forms.Form):
@@ -26,9 +27,9 @@ class LoginForm(forms.Form):
         return self.cleaned_data
 
 
-class LoginWidget(Bootstrap):
+class LoginWidget(LeafCompositeView):
 
-    template_name = 'adminnext/widgets/login.html'
+    template_name = 'compositeadmin/widgets/login.html'
 
     def __init__(self, parent=None, redirect_name=None, **kwargs):
         super(LoginWidget, self).__init__(parent, **kwargs)
@@ -55,6 +56,6 @@ class LoginWidget(Bootstrap):
             return self.get(request, *args, **kwargs)
 
 
-class Login(Bootstrap):
+class Login(StackedCompositeViewWithPost):
 
-    composites = ((LoginWidget, 'adminnext:index'),)
+    composites = ((LoginWidget, 'compositeadmin:index'),)

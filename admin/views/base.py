@@ -1,22 +1,20 @@
-from composite.views import StackedComposite
+from composite import LeafCompositeView
+from composite import StackedCompositeView
 from composite.mixin import LoginRequiredMixin
 from composite.mixin import PermissionRequiredMixin
 
 
-class Bootstrap(StackedComposite):
+class Base(LoginRequiredMixin, StackedCompositeView, PermissionRequiredMixin):
 
-    css_files = ['css/bootstrap.css', 'css/bootstrap-responsive.css', 'css/admin.css']
-    javascript_files = ['js/jquery.js', 'js/bootstrap.js']
+    login_url_name = 'compositeadmin:login'
+    is_staff = True
 
     template_name = 'adminnext/base.html'
 
 
-class Base(LoginRequiredMixin, Bootstrap, PermissionRequiredMixin):
+class BaseLeaf(LoginRequiredMixin, LeafCompositeView, PermissionRequiredMixin):
 
-    login_url_name = 'adminnext:login'
+    login_url_name = 'compositeadmin:login'
     is_staff = True
 
-    def get_context_data(self, **kwargs):
-        ctx = super(Base, self).get_context_data(**kwargs)
-        ctx['breadcrumb'] = self.breadcrumb
-        return ctx
+    template_name = 'adminnext/base.html'

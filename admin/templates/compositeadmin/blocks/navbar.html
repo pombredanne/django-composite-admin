@@ -1,8 +1,9 @@
 {% load url from future %}
 
+
 <div class="navbar navbar-fixed-top">
     <div class="navbar-inner">
-        <a class="brand" href="{% url "adminnext:index" %}">Django Composite Administration</a>
+        <a class="brand" href="{% url "compositeadmin:index" %}">Django Composite Administration</a>
         <ul class="login nav pull-right">
             <li><p class="navbar-text">Welcome{% if request.user.is_authenticated %} <span class="username">{{ request.user.username }}</span>{% endif %}</p></li>
             {% if request.user.is_authenticated %}

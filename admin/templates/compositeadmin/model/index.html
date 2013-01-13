@@ -1,0 +1,15 @@
+{% extends "compositeadmin/base.html" %}
+
+
+{% block container %}
+    <div class=row>
+        <div class=span12>
+            <h1>
+                Select {{ model_name }} to change
+            </h1>
+        </div>
+    </div>
+    <div class=row>
+        {{ block.super }}
+    </div>
+{% endblock %}

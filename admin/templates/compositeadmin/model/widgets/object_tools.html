@@ -1,0 +1,11 @@
+{% load url from future %}
+
+<div class="span12" id="object-tools">
+    {% for title, urlname in buttons %}
+        <div class="btn-group pull-right">
+            <a href="{% url urlname %}">
+                <button class="btn">{{ title }}</button>
+            </a>
+        </div>
+    {% endfor %}
+</div>

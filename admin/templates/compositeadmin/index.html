@@ -1,13 +1,9 @@
-{% extends "adminnext/base.html" %}
+{% extends "compositeadmin/base.html" %}
 
 {% load url from future %}
 
-{% block container_header %}
-    {% include "adminnext/blocks/navbar.html" %}
-{% endblock %}
 
-
-{% block row %}
+{% block container %}
     {% regroup model_admins by app_label as apps %}
 
     <ul class="well nav nav-list">

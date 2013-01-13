@@ -1,5 +1,5 @@
-from collections import AdminSite
-from collections import ModelAdmin
+from urls import AdminSite
+from urls import ModelAdmin
 
 
 site = AdminSite()
