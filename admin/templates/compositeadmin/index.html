@@ -4,6 +4,7 @@
 
 
 {% block container %}
+    {{ mode_admins }}
     {% regroup model_admins by app_label as apps %}
 
     <ul class="well nav nav-list">

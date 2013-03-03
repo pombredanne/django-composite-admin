@@ -9,7 +9,7 @@ class Base(LoginRequiredMixin, StackedCompositeView, PermissionRequiredMixin):
     login_url_name = 'compositeadmin:login'
     is_staff = True
 
-    template_name = 'adminnext/base.html'
+    template_name = 'compositeadmin/base.html'
 
 
 class BaseLeaf(LoginRequiredMixin, LeafCompositeView, PermissionRequiredMixin):
@@ -17,4 +17,4 @@ class BaseLeaf(LoginRequiredMixin, LeafCompositeView, PermissionRequiredMixin):
     login_url_name = 'compositeadmin:login'
     is_staff = True
 
-    template_name = 'adminnext/base.html'
+    template_name = 'compositeadmin/base.html'

@@ -62,7 +62,7 @@ class Index(Base):
         context = super(Index, self).get_context_data(**kwargs)
         app_label = self.model_class._meta.app_label
         model_name = self.model_class._meta.module_name
-        breadcrumb = (('Home', 'compositeadmin:index'), (app_label, None), (model_name, None))
+        breadcrumb = (('Administration', 'compositeadmin:index'), (app_label, None), (model_name, None))
         context['breadcrumb'] = breadcrumb
         context['model_name'] = model_name
         return context

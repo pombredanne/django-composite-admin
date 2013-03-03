@@ -10,7 +10,7 @@ class Index(Base):
 
     def get_context_data(self, **kwargs):
         context = super(Index, self).get_context_data(**kwargs)
-        breadcrumb = [('Home', None)]
+        breadcrumb = [('Administration', None)]
         context['breadcrumb'] = breadcrumb
         context['model_admins'] = self.model_admins
         return context

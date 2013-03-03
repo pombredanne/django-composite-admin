@@ -79,9 +79,11 @@ class AdminSite(UrlCollection):
         else:
             for app in settings.INSTALLED_APPS:
                 try:
-                    models = import_module('%s.admin' % app)
+                    import_module('%s.admin' % app)
                 except ImportError:
+                    print app, 'error'
                     pass
+            print self.model_admins
 
     def register(self, model, model_admin_class=None):
         model_admin = model_admin_class if model_admin_class else self.ModelAdmin

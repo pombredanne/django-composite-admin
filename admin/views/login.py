@@ -32,7 +32,7 @@ class LoginWidget(LeafCompositeView):
     template_name = 'compositeadmin/widgets/login.html'
 
     def __init__(self, parent=None, redirect_name=None, **kwargs):
-        super(LoginWidget, self).__init__(parent, **kwargs)
+        super(LoginWidget, self).__init__(parent=parent, **kwargs)
         self.redirect_name = redirect_name
 
     def get_context_data(self, **kwargs):
@@ -58,4 +58,11 @@ class LoginWidget(LeafCompositeView):
 
 class Login(StackedCompositeViewWithPost):
 
-    composites = ((LoginWidget, 'compositeadmin:index'),)
+    template_name = 'compositeadmin/login.html'
+
+    composites = ((LoginWidget, dict(redirect_name='compositeadmin:index')),)
+
+    def get_context_data(self, *args, **kwargs):
+        ctx = super(Login, self).get_context_data(*args, **kwargs)
+        ctx['breadcrumb'] = (('Administration',),  ('Login',))
+        return ctx

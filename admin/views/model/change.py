@@ -1,4 +1,5 @@
 from django import forms
+from django.shortcuts import redirect
 from django.forms.models import modelform_factory
 
 from ..base import BaseLeaf
@@ -38,16 +39,25 @@ class ModelChangeForm(object):
 
 class BaseChangeView(BaseLeaf):
 
-    template_name = 'compositeadmin/model/edit.html'
     model_class = None
     verbose_name = None
+
+    def get_template_names(self):
+        custom_template = 'compositeadmin/%s/%s/edit.html' % (
+            self.model_class._meta.app_label,
+            self.model_class._meta.module_name
+        )
+        return [custom_template, 'compositeadmin/model/edit.html']
+
+    def changelist_url_name(self):
+        return 'compositeadmin:%s-%s:object-list' % (self.model_class._meta.app_label, self.model_class._meta.module_name)
 
     def get_context_data(self, **kwargs):
         context = super(BaseChangeView, self).get_context_data(**kwargs)
         app_label = self.model_class._meta.app_label
         model_name = self.model_class._meta.module_name
-        changelist = 'compositeadmin:%s-%s:object-list' % (app_label, model_name)
-        breadcrumb = (('Home', 'compositeadmin:index'), (app_label, None), (model_name, changelist), (self.verbose_name, None))
+        changelist = self.changelist_url_name()
+        breadcrumb = (('Administration', 'compositeadmin:index'), (app_label, None), (model_name, changelist), (self.verbose_name, None))
         context['breadcrumb'] = breadcrumb
         context['model_name'] = model_name
         context['verbose_name'] = self.verbose_name
@@ -67,6 +77,16 @@ class AddView(BaseChangeView):
         context['form'] = Form()
         return self.render_to_response(context)
 
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        change_form = ModelChangeForm(request, self.model_class)
+        Form = change_form.form_class()
+        form = Form(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect(self.changelist_url_name())
+        return self.render_to_response(context)
+
 
 class EditView(BaseChangeView):
 
@@ -81,4 +101,16 @@ class EditView(BaseChangeView):
         change_form = ModelChangeForm(request, self.model_class)
         Form = change_form.form_class()
         context['form'] = Form(instance=object)
+        return self.render_to_response(context)
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        change_form = ModelChangeForm(request, self.model_class)
+        Form = change_form.form_class()
+        pk = self.kwargs['pk']
+        object = self.model_class.objects.get(pk=pk)
+        form = Form(request.POST, instance=object)
+        if form.is_valid():
+            form.save()
+            return redirect(self.changelist_url_name())
         return self.render_to_response(context)
